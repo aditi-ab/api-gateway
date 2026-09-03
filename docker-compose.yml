@@ -1,0 +1,82 @@
+services:
+  upstream:
+    image: nginx:1.29-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost/ >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD before starting Compose}
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+  management:
+    build: { context: ., dockerfile: src/ApiGateway.Management/Dockerfile }
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      DatabaseProvider: SqlServer
+      ConnectionStrings__Gateway: Server=sqlserver;Database=ApiGateway;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      DataProtection__KeysPath: /app/state/data-protection-keys
+      CertificateProtection__KeysPath: /app/certificate-keys
+      Gateway__ApplyMigrationsOnStartup: "true"
+    ports: ["5080:8080"]
+    volumes:
+      - management-keys:/app/state/data-protection-keys
+      - certificate-keys:/app/certificate-keys
+    read_only: true
+    tmpfs: [/tmp]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c \"exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /readyz HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3\""]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    depends_on: { sqlserver: { condition: service_healthy } }
+  gateway-one:
+    build: { context: ., dockerfile: src/ApiGateway/Dockerfile }
+    environment: &gateway_environment
+      DatabaseProvider: SqlServer
+      ConnectionStrings__Gateway: Server=sqlserver;Database=ApiGateway;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      Gateway__Environment: development
+      Gateway__InstanceId: gateway-one
+      Gateway__LastKnownGoodPath: /app/state/last-known-good.json
+      Gateway__DataProtectionKeysPath: /app/state/keys
+      Gateway__InboundTls__HttpPort: "8080"
+      Gateway__InboundTls__HttpsPort: "8443"
+      CertificateProtection__KeysPath: /app/certificate-keys
+    ports: ["5070:8080", "5443:8443"]
+    volumes:
+      - gateway-one-state:/app/state
+      - certificate-keys:/app/certificate-keys
+    read_only: true
+    tmpfs: [/tmp]
+    healthcheck: &gateway_healthcheck
+      test: ["CMD-SHELL", "bash -c \"exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /healthz HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3\""]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    depends_on: { management: { condition: service_healthy }, upstream: { condition: service_healthy } }
+  gateway-two:
+    build: { context: ., dockerfile: src/ApiGateway/Dockerfile }
+    environment:
+      <<: *gateway_environment
+      Gateway__InstanceId: gateway-two
+    ports: ["5071:8080", "5444:8443"]
+    volumes:
+      - gateway-two-state:/app/state
+      - certificate-keys:/app/certificate-keys
+    read_only: true
+    tmpfs: [/tmp]
+    healthcheck: *gateway_healthcheck
+    depends_on: { management: { condition: service_healthy }, upstream: { condition: service_healthy } }
+volumes:
+  management-keys:
+  gateway-one-state:
+  gateway-two-state:
+  certificate-keys:

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.apigateway.local/gateway-config.v1.schema.json",
+  "title": "API Gateway configuration revision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "routes", "clusters", "policies"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "routes": { "type": "array", "items": { "$ref": "#/$defs/route" } },
+    "clusters": { "type": "array", "items": { "$ref": "#/$defs/cluster" } },
+    "policies": { "$ref": "#/$defs/policies" }
+  },
+  "$defs": {
+    "duration": { "type": "string", "pattern": "^(-)?([0-9]+\\.)?[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,7})?$" },
+    "metadata": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "owner": { "type": ["string", "null"] }, "tags": { "type": ["array", "null"], "items": { "type": "string" } }, "description": { "type": ["string", "null"] }, "criticality": { "type": ["string", "null"] }, "sunsetAt": { "type": ["string", "null"], "format": "date-time" }, "deprecationMessage": { "type": ["string", "null"] } }
+    },
+    "valueMatch": {
+      "type": "object", "additionalProperties": false, "required": ["name", "pattern", "mode", "isCaseSensitive"],
+      "properties": { "name": { "type": "string", "minLength": 1 }, "pattern": { "type": "string" }, "mode": { "enum": ["Exact", "ExactHeader", "Prefix", "HeaderPrefix", "Contains", "NotContains", "Exists", "NotExists"] }, "isCaseSensitive": { "type": "boolean" } }
+    },
+    "match": {
+      "type": "object", "additionalProperties": false, "required": ["path", "hosts", "methods", "headers", "queryParameters"],
+      "properties": { "path": { "type": "string", "pattern": "^/" }, "hosts": { "type": "array", "items": { "type": "string" } }, "methods": { "type": "array", "items": { "type": "string" } }, "headers": { "type": "array", "items": { "$ref": "#/$defs/valueMatch" } }, "queryParameters": { "type": "array", "items": { "$ref": "#/$defs/valueMatch" } } }
+    },
+    "mirror": {
+      "type": "object", "additionalProperties": false, "required": ["clusterId", "percentage", "maximumBufferedBodyBytes"],
+      "properties": { "clusterId": { "type": "string", "minLength": 1 }, "percentage": { "type": "number", "minimum": 0, "maximum": 100 }, "allowedMethods": { "type": ["array", "null"], "items": { "type": "string" } }, "maximumBufferedBodyBytes": { "type": "integer", "minimum": 0 }, "timeout": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "removeHeaders": { "type": ["array", "null"], "items": { "type": "string" } } }
+    },
+    "route": {
+      "type": "object", "additionalProperties": false, "required": ["id", "enabled", "match", "clusterId", "transforms", "metadata"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "enabled": { "type": "boolean" }, "order": { "type": ["integer", "null"] }, "match": { "$ref": "#/$defs/match" }, "clusterId": { "type": "string", "minLength": 1 }, "transforms": { "type": "array", "items": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } } }, "authorizationPolicy": { "type": ["string", "null"] }, "rateLimitPolicy": { "type": ["string", "null"] }, "timeoutPolicy": { "type": ["string", "null"] }, "corsPolicy": { "type": ["string", "null"] }, "mirror": { "oneOf": [{ "$ref": "#/$defs/mirror" }, { "type": "null" }] }, "metadata": { "$ref": "#/$defs/metadata" } }
+    },
+    "destination": {
+      "type": "object", "additionalProperties": false, "required": ["address", "pool"],
+      "properties": { "address": { "type": "string", "format": "uri", "pattern": "^https?://" }, "healthAddress": { "type": ["string", "null"], "format": "uri" }, "pool": { "type": "string", "minLength": 1 }, "metadata": { "type": ["object", "null"], "additionalProperties": { "type": "string" } } }
+    },
+    "health": {
+      "type": "object", "additionalProperties": false, "required": ["activeEnabled", "path", "passiveEnabled"],
+      "properties": { "activeEnabled": { "type": "boolean" }, "path": { "type": "string", "pattern": "^/" }, "interval": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "timeout": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "passiveEnabled": { "type": "boolean" }, "reactivationPeriod": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "activePolicy": { "type": "string" }, "passivePolicy": { "type": "string" }, "availableDestinationsPolicy": { "type": "string" }, "query": { "type": ["string", "null"] } }
+    },
+    "affinity": {
+      "type": "object", "additionalProperties": false, "required": ["enabled", "policy", "failurePolicy", "cookieName"],
+      "properties": { "enabled": { "type": "boolean" }, "policy": { "type": "string" }, "failurePolicy": { "type": "string" }, "cookieName": { "type": "string" }, "path": { "type": ["string", "null"] }, "domain": { "type": ["string", "null"] }, "securePolicy": { "enum": ["None", "SameAsRequest", "Always"] }, "sameSite": { "enum": ["Unspecified", "None", "Lax", "Strict"] }, "expiration": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] } }
+    },
+    "traffic": {
+      "type": "object", "additionalProperties": false, "required": ["allocations", "mode", "fallbackToHealthyPool"],
+      "properties": { "allocations": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 100 } }, "mode": { "enum": ["random", "stable"] }, "key": { "type": ["string", "null"] }, "fallbackToHealthyPool": { "type": "boolean" }, "keySource": { "type": ["string", "null"], "enum": ["header", "cookie", "claim", "consumerKey", null] } }
+    },
+    "tls": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "clientCertificateRef": { "type": ["string", "null"] }, "trustBundleRef": { "type": ["string", "null"] } }
+    },
+    "httpClient": {
+      "type": "object", "additionalProperties": false, "required": ["version", "versionPolicy", "automaticDecompression", "allowAutoRedirect", "enableMultipleHttp2Connections"],
+      "properties": { "version": { "enum": ["1.1", "2.0", "3.0"] }, "versionPolicy": { "enum": ["RequestVersionOrLower", "RequestVersionOrHigher", "RequestVersionExact"] }, "automaticDecompression": { "type": "boolean" }, "allowAutoRedirect": { "type": "boolean" }, "pooledConnectionLifetime": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "maxConnectionsPerServer": { "type": ["integer", "null"], "minimum": 1 }, "enableMultipleHttp2Connections": { "type": "boolean" } }
+    },
+    "cluster": {
+      "type": "object", "additionalProperties": false, "required": ["id", "loadBalancingPolicy", "destinations", "health", "metadata"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "loadBalancingPolicy": { "enum": ["PowerOfTwoChoices", "RoundRobin", "Random", "LeastRequests"] }, "destinations": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/destination" } }, "health": { "$ref": "#/$defs/health" }, "sessionAffinity": { "oneOf": [{ "$ref": "#/$defs/affinity" }, { "type": "null" }] }, "resiliencePolicy": { "type": ["string", "null"] }, "traffic": { "oneOf": [{ "$ref": "#/$defs/traffic" }, { "type": "null" }] }, "tls": { "oneOf": [{ "$ref": "#/$defs/tls" }, { "type": "null" }] }, "httpClient": { "$ref": "#/$defs/httpClient" }, "metadata": { "$ref": "#/$defs/metadata" } }
+    },
+    "authorization": {
+      "type": "object", "additionalProperties": false, "required": ["type"],
+      "properties": { "type": { "enum": ["apiKey", "jwt", "anyOf", "allOf"] }, "requiredScopes": { "type": ["array", "null"], "items": { "type": "string" } }, "authority": { "type": ["string", "null"], "format": "uri" }, "issuer": { "type": ["string", "null"] }, "audiences": { "type": ["array", "null"], "items": { "type": "string" } }, "requiredClaims": { "type": ["object", "null"], "additionalProperties": { "type": "string" } }, "policies": { "type": ["array", "null"], "items": { "type": "string" } }, "clockSkew": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] } }
+    },
+    "rateLimit": {
+      "type": "object", "additionalProperties": false, "required": ["type", "permitLimit", "queueLimit", "partitionBy"],
+      "properties": { "type": { "enum": ["fixedWindow", "slidingWindow", "tokenBucket", "concurrency"] }, "permitLimit": { "type": "integer", "minimum": 1 }, "window": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "queueLimit": { "type": "integer", "minimum": 0 }, "partitionBy": { "enum": ["global", "clientIp", "consumerKey", "jwtSubject", "header", "route"] }, "partitionName": { "type": ["string", "null"] }, "segmentsPerWindow": { "type": "integer", "minimum": 2 }, "tokensPerPeriod": { "type": ["integer", "null"], "minimum": 1 }, "queueOrder": { "enum": ["oldestFirst", "newestFirst"] } }
+    },
+    "timeout": { "type": "object", "additionalProperties": false, "required": ["total"], "properties": { "total": { "$ref": "#/$defs/duration" } } },
+    "resilience": {
+      "type": "object", "additionalProperties": false, "required": ["retryCount", "maximumBufferedRequestBytes"],
+      "properties": { "retryCount": { "type": "integer", "minimum": 0, "maximum": 10 }, "attemptTimeout": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "statusCodes": { "type": ["array", "null"], "items": { "type": "integer", "minimum": 100, "maximum": 599 } }, "allowedMethods": { "type": ["array", "null"], "items": { "type": "string" } }, "maximumBufferedRequestBytes": { "type": "integer", "minimum": 0 }, "failureRatio": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }, "samplingDuration": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "minimumThroughput": { "type": ["integer", "null"], "minimum": 1 }, "breakDuration": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "retryTransportFailures": { "type": "boolean" }, "backoff": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] }, "jitter": { "type": "boolean" } }
+    },
+    "cors": {
+      "type": "object", "additionalProperties": false, "required": ["origins", "methods", "headers", "allowCredentials"],
+      "properties": { "origins": { "type": "array", "minItems": 1, "items": { "type": "string" } }, "methods": { "type": "array", "minItems": 1, "items": { "type": "string" } }, "headers": { "type": "array", "items": { "type": "string" } }, "exposedHeaders": { "type": ["array", "null"], "items": { "type": "string" } }, "allowCredentials": { "type": "boolean" }, "preflightMaxAge": { "oneOf": [{ "$ref": "#/$defs/duration" }, { "type": "null" }] } }
+    },
+    "policies": {
+      "type": "object", "additionalProperties": false, "required": ["authorization", "rateLimits", "timeouts", "resilience", "cors"],
+      "properties": { "defaultAuthorizationPolicy": { "type": ["string", "null"] }, "authorization": { "type": "object", "additionalProperties": { "$ref": "#/$defs/authorization" } }, "rateLimits": { "type": "object", "additionalProperties": { "$ref": "#/$defs/rateLimit" } }, "timeouts": { "type": "object", "additionalProperties": { "$ref": "#/$defs/timeout" } }, "resilience": { "type": "object", "additionalProperties": { "$ref": "#/$defs/resilience" } }, "cors": { "type": "object", "additionalProperties": { "$ref": "#/$defs/cors" } } }
+    }
+  }
+}

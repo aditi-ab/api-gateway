@@ -1,0 +1,22 @@
+{
+  "name": "api-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": ["src/ApiGateway.Admin", "documentation", "tests/ApiGateway.BrowserTests"],
+  "resolutions": {
+    "eslint-plugin-jsdoc": "62.8.0",
+    "eslint-plugin-regexp": "3.1.0"
+  },
+  "scripts": {
+    "type-check": "yarn build:ui && yarn workspace api-gateway-admin type-check",
+    "test": "yarn --cwd Packages/Aditify test && yarn workspace api-gateway-admin test",
+    "test:e2e": "yarn workspace api-gateway-browser-tests test",
+    "codegen": "dotnet run --project src/ApiGateway.Management -- schema export ../../schema.graphql && yarn workspace api-gateway-admin codegen",
+    "build:ui": "yarn --cwd Packages/Aditify build",
+    "build:catalog": "yarn --cwd Packages/Aditify build:catalog",
+    "build:admin": "yarn build:ui && yarn workspace api-gateway-admin build",
+    "docs:build": "yarn workspace api-gateway-docs build",
+    "build": "yarn build:admin && yarn docs:build"
+  }
+}

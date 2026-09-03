@@ -1,0 +1,27 @@
+# escape=`
+FROM mcr.microsoft.com/windows/servercore:ltsc2025
+
+SHELL ["powershell", "-NoLogo", "-NoProfile", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+ARG APP_VERSION=1.0.0
+LABEL org.opencontainers.image.title="ApiGateway" `
+      org.opencontainers.image.description="ApiGateway data plane for Windows Server Core LTSC 2025" `
+      org.opencontainers.image.version=${APP_VERSION}
+
+RUN New-Item -ItemType Directory -Force C:\app\state | Out-Null; `
+    icacls C:\app\state /grant '*S-1-5-20:(OI)(CI)F' /T | Out-Null
+
+WORKDIR C:\app
+COPY .container/windows/api-gateway/ .
+USER "NT AUTHORITY\NETWORK SERVICE"
+ENV DOTNET_EnableDiagnostics=0 `
+    DatabaseProvider=Sqlite `
+    ConnectionStrings__Gateway="Data Source=C:\app\state\apigateway.db" `
+    Gateway__Environment=development `
+    Gateway__LastKnownGoodPath=C:\app\state\last-known-good.json `
+    Gateway__DataProtectionKeysPath=C:\app\state\gateway-data-protection-keys `
+    Gateway__InboundTls__HttpPort=8080 `
+    Gateway__InboundTls__HttpsPort=8443 `
+    CertificateProtection__KeysPath=C:\app\state\certificate-keys
+VOLUME ["C:\\app\\state"]
+EXPOSE 8080 8443
+ENTRYPOINT ["C:\\app\\ApiGateway.exe"]

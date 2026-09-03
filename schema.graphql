@@ -1,0 +1,1767 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query @authorize(policy: "Reader") {
+  me: ManagementIdentity!
+  environments: [GatewayEnvironment!]!
+    @authorize(policy: "Reader")
+    @cost(weight: "10")
+  environment(id: UUID!): GatewayEnvironment @cost(weight: "10")
+  revisions(environmentId: UUID!, state: RevisionState): [ConfigRevision!]!
+    @cost(weight: "10")
+  revision(id: UUID!): ConfigRevision @cost(weight: "10")
+  activeRevision(environmentId: UUID!): ConfigRevision @cost(weight: "10")
+  instances(environmentId: UUID!): [GatewayInstance!]!
+    @authorize(policy: "InstancesRead")
+    @cost(weight: "10")
+  activationHistory(environmentId: UUID!, take: Int!): [GatewayActivationEvent!]!
+    @authorize(policy: "InstancesRead")
+    @cost(weight: "10")
+  auditEvents(environmentId: UUID, take: Int!): [AuditEvent!]!
+    @authorize(policy: "AuditRead")
+    @cost(weight: "10")
+  validateRevision(id: UUID!): ValidationReport! @cost(weight: "10")
+  systemStatus: SystemStatus! @authorize(policy: "Reader")
+  managementApiKeys: [ApiKeyInfo!]!
+    @authorize(policy: "CredentialsRead")
+    @cost(weight: "10")
+  consumerApiKeys: [ApiKeyInfo!]!
+    @authorize(policy: "CredentialsRead")
+    @cost(weight: "10")
+  localUsers: [LocalUserInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  localRoleCatalog: [String!]!
+  entraConnection: EntraConnectionInfo! @authorize(policy: "Administrator")
+  inboundCertificates: [InboundCertificateInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  acmeDirectory: AcmeDirectorySnapshot!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  acmeAccount: AcmeAccountInfo
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  acmeDirectories: [AcmeDirectorySnapshot!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  acmeAccounts: [AcmeAccountInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  dnsProviderProfiles: [DnsProviderProfileInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  managedCertificates: [ManagedCertificateInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  managedCertificateActivity(managedCertificateId: UUID!, take: Int!): [ManagedCertificateActivityInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  managedCertificateDnsChallenges(managedCertificateId: UUID!): [ManagedCertificateDnsChallengeInfo!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  inboundSecuritySettings: InboundSecuritySettingsInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  environmentConnection(
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): EnvironmentConnectionConnection
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  revisionConnection(
+    environmentId: UUID!
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): RevisionConnectionConnection
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  instanceConnection(
+    environmentId: UUID!
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): InstanceConnectionConnection
+    @authorize(policy: "InstancesRead")
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  auditConnection(
+    environmentId: UUID
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): AuditConnectionConnection
+    @authorize(policy: "AuditRead")
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  activationConnection(
+    environmentId: UUID!
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): ActivationConnectionConnection
+    @authorize(policy: "InstancesRead")
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  activeRoutes(environmentId: UUID!): [GatewayRoute!]! @cost(weight: "10")
+  activeClusters(environmentId: UUID!): [GatewayCluster!]! @cost(weight: "10")
+  routes(environmentId: UUID!, filter: String): [ManagedRoute!]!
+    @cost(weight: "10")
+  route(environmentId: UUID!, routeId: String!): ManagedRoute
+    @cost(weight: "10")
+  upstreams(environmentId: UUID!): [NamedUpstream!]! @cost(weight: "10")
+  upstream(environmentId: UUID!, upstreamId: String!): NamedUpstream
+    @cost(weight: "10")
+  routeFeatureCatalog: [RouteFeatureDescriptor!]!
+  routeUnavailableResponseProfiles(environmentId: UUID!): [RouteUnavailableResponseProfile!]!
+    @cost(weight: "10")
+  routeOperationalDefaults(environmentId: UUID!): RouteOperationalDefaults!
+    @cost(weight: "10")
+  pendingConfiguration(environmentId: UUID!): PendingConfigurationInfo
+    @cost(weight: "10")
+  routeRuntimeStatuses(environmentId: UUID!): [RouteRuntimeStatus!]!
+    @cost(weight: "10")
+  configurationHistory(environmentId: UUID!): [ConfigRevision!]!
+    @cost(weight: "10")
+  exportConfiguration(environmentId: UUID!): String! @cost(weight: "10")
+  revisionRoutes(
+    revisionId: UUID!
+    filter: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): RevisionRoutesConnection
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  clusters(
+    revisionId: UUID!
+    filter: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the last _n_ elements from the list."
+    last: Int
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+  ): ClustersConnection
+    @listSize(
+      assumedSize: 200
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  managementApiKey(id: UUID!): ApiKeyInfo
+    @authorize(policy: "CredentialsRead")
+    @cost(weight: "10")
+  consumerApiKey(id: UUID!): ApiKeyInfo
+    @authorize(policy: "CredentialsRead")
+    @cost(weight: "10")
+  gatewayDiagnostics(environmentId: UUID!): GatewayDiagnostics!
+    @authorize(policy: "InstancesRead")
+    @cost(weight: "10")
+  configurationSchema(version: Int!): String! @cost(weight: "10")
+  drift(environmentId: UUID!): [InstanceDrift!]!
+    @authorize(policy: "InstancesRead")
+    @cost(weight: "10")
+  revisionDiff(fromRevisionId: UUID!, toRevisionId: UUID!): RevisionDiff!
+    @cost(weight: "10")
+}
+
+type Mutation {
+  registerAcmeAccount(
+    contactEmail: String!
+    termsAccepted: Boolean!
+    directoryUrl: String
+  ): AcmeAccountInfo! @authorize(policy: "Administrator") @cost(weight: "10")
+  updateAcmeAccountContact(expectedVersion: UUID!, contactEmail: String!): AcmeAccountInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  updateAcmeAccount(id: UUID!, expectedVersion: UUID!, contactEmail: String!): AcmeAccountInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  setDefaultAcmeAccount(id: UUID!, expectedVersion: UUID!): AcmeAccountInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  deleteAcmeAccount(id: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  createDnsProviderProfile(
+    name: String!
+    provider: DnsProviderKind!
+    credentials: DnsProviderCredentialsInput!
+  ): DnsProviderProfileInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  updateDnsProviderProfile(
+    id: UUID!
+    expectedVersion: UUID!
+    name: String!
+    credentials: DnsProviderCredentialsInput
+  ): DnsProviderProfileInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  testDnsProviderProfile(id: UUID!): [DnsManagedZone!]!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  deleteDnsProviderProfile(id: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  issueAcmeCertificate(
+    name: String!
+    dnsNames: [String!]!
+    challengeKind: AcmeChallengeKind!
+    dnsProviderProfileId: UUID
+    acmeAccountId: UUID
+  ): ManagedCertificateInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  renewAcmeCertificate(id: UUID!, expectedVersion: UUID!): ManagedCertificateInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  renameManagedCertificate(id: UUID!, expectedVersion: UUID!, name: String!): ManagedCertificateInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  deleteManagedCertificate(id: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  uploadInboundCertificate(
+    name: String!
+    pkcs12Base64: String!
+    password: String
+  ): InboundCertificateInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  replaceInboundCertificate(
+    id: UUID!
+    expectedVersion: UUID!
+    pkcs12Base64: String!
+    password: String
+  ): InboundCertificateInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  renameInboundCertificate(id: UUID!, expectedVersion: UUID!, name: String!): InboundCertificateInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  deleteInboundCertificate(id: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  updateInboundSecuritySettings(
+    expectedVersion: UUID
+    enabled: Boolean!
+    hosts: [String!]!
+    maxAgeSeconds: Int!
+    includeSubDomains: Boolean!
+    preload: Boolean!
+  ): InboundSecuritySettingsInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  createLocalUser(username: String!, displayName: String, roles: [String!]!): LocalUserSecretPayload!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  updateLocalUser(
+    id: UUID!
+    expectedVersion: UUID!
+    displayName: String
+    roles: [String!]!
+    enabled: Boolean!
+  ): LocalUserInfo! @authorize(policy: "Administrator") @cost(weight: "10")
+  updateEntraConnection(
+    enabled: Boolean!
+    authority: String!
+    audience: String!
+    clientId: String!
+    scope: String!
+    expectedVersion: UUID!
+  ): EntraConnectionInfo!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  resetLocalUserPassword(id: UUID!): LocalUserSecretPayload!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  deleteLocalUser(id: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  createRoute(environmentId: UUID!, input: CreateManagedRouteInput!): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  createUpstream(environmentId: UUID!, input: SaveNamedUpstreamInput!): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  updateUpstream(
+    environmentId: UUID!
+    upstreamId: String!
+    expectedUpstreamVersion: String!
+    input: SaveNamedUpstreamInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  deleteUpstream(
+    environmentId: UUID!
+    upstreamId: String!
+    expectedUpstreamVersion: String!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  updateRoute(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+    input: UpdateManagedRouteInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  duplicateRoute(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+    name: String!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  updateRouteFeatures(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+    input: ManagedRouteFeaturesInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  updateRouteBasics(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+    input: UpdateManagedRouteBasicsInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  setRouteEnabled(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+    enabled: Boolean!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  setRouteOperationalState(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+    input: UpdateRouteOperationalStateInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  saveRouteUnavailableResponseProfile(
+    environmentId: UUID!
+    expectedConfigurationVersion: UUID
+    input: SaveRouteUnavailableResponseProfileInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  deleteRouteUnavailableResponseProfile(
+    environmentId: UUID!
+    expectedConfigurationVersion: UUID
+    profileId: String!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  updateRouteOperationalDefaults(
+    environmentId: UUID!
+    expectedConfigurationVersion: UUID
+    input: UpdateRouteOperationalDefaultsInput!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  deleteRoute(
+    environmentId: UUID!
+    routeId: String!
+    expectedRouteVersion: String!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  revertConfigurationChange(
+    environmentId: UUID!
+    changeId: UUID!
+    expectedConfigurationVersion: UUID!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  restoreConfigurationSnapshot(
+    environmentId: UUID!
+    revisionId: UUID!
+    expectedConfigurationVersion: UUID!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  importConfiguration(
+    environmentId: UUID!
+    expectedConfigurationVersion: UUID!
+    json: String!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  copyConfiguration(
+    sourceEnvironmentId: UUID!
+    targetEnvironmentId: UUID!
+    expectedTargetVersion: UUID!
+  ): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  previewOpenApiRoutes(
+    environmentId: UUID!
+    expectedConfigurationVersion: UUID!
+    source: String!
+    upstreamUrl: String!
+    routeIdPrefix: String
+  ): ManagedOpenApiPreview!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  applyOpenApiRoutes(previewToken: String!, routeIds: [String!]!): ConfigurationChangeResult!
+    @authorize(policy: "ConfigurationManager")
+    @cost(weight: "10")
+  createEnvironment(slug: String!, displayName: String!, description: String): GatewayEnvironment!
+    @authorize(policy: "ConfigurationEditor")
+    @cost(weight: "10")
+  updateEnvironment(
+    id: UUID!
+    expectedVersion: UUID!
+    displayName: String!
+    description: String
+  ): GatewayEnvironment!
+    @authorize(policy: "ConfigurationEditor")
+    @cost(weight: "10")
+  setEnvironmentPublishingMode(
+    id: UUID!
+    expectedVersion: UUID!
+    mode: ConfigurationPublishingMode!
+  ): GatewayEnvironment! @authorize(policy: "Administrator") @cost(weight: "10")
+  publishPendingConfiguration(
+    environmentId: UUID!
+    expectedVersion: UUID!
+    comment: String
+  ): ConfigRevision! @authorize(policy: "Publisher") @cost(weight: "10")
+  discardPendingConfiguration(environmentId: UUID!, expectedVersion: UUID!): Boolean!
+    @authorize(policy: "Publisher")
+    @cost(weight: "10")
+  setEnvironmentArchived(id: UUID!, expectedVersion: UUID!, archived: Boolean!): GatewayEnvironment!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  deleteEnvironment(id: UUID!, expectedVersion: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  createManagementApiKey(
+    name: String!
+    scopes: [String!]!
+    allowedCidrs: [String!]
+    expiresAtUtc: DateTime
+  ): SecretPayload! @authorize(policy: "CredentialsWrite") @cost(weight: "10")
+  createConsumerApiKey(
+    name: String!
+    environmentIds: [UUID!]!
+    routeIds: [String!]!
+    claims: [KeyValuePairOfStringAndStringInput!]!
+    allowedCidrs: [String!]
+    expiresAtUtc: DateTime
+  ): SecretPayload! @authorize(policy: "CredentialsWrite") @cost(weight: "10")
+  revokeManagementApiKey(id: UUID!): Boolean!
+    @authorize(policy: "CredentialsWrite")
+    @cost(weight: "10")
+  revokeConsumerApiKey(id: UUID!): Boolean!
+    @authorize(policy: "CredentialsWrite")
+    @cost(weight: "10")
+  rotateManagementApiKey(id: UUID!): SecretPayload!
+    @authorize(policy: "CredentialsWrite")
+    @cost(weight: "10")
+  rotateConsumerApiKey(id: UUID!): SecretPayload!
+    @authorize(policy: "CredentialsWrite")
+    @cost(weight: "10")
+  updateManagementApiKey(
+    id: UUID!
+    name: String!
+    scopes: [String!]!
+    allowedCidrs: [String!]
+    expiresAtUtc: DateTime
+  ): Boolean! @authorize(policy: "CredentialsWrite") @cost(weight: "10")
+  updateConsumerApiKey(
+    id: UUID!
+    name: String!
+    environmentIds: [UUID!]!
+    routeIds: [String!]!
+    claims: [KeyValuePairOfStringAndStringInput!]!
+    allowedCidrs: [String!]
+    expiresAtUtc: DateTime
+  ): Boolean! @authorize(policy: "CredentialsWrite") @cost(weight: "10")
+  decommissionInstance(id: UUID!): Boolean!
+    @authorize(policy: "Administrator")
+    @cost(weight: "10")
+  runRetentionMaintenance(
+    activationBeforeUtc: DateTime!
+    auditBeforeUtc: DateTime!
+  ): RetentionResult! @authorize(policy: "Administrator") @cost(weight: "10")
+}
+
+type AcmeAccountInfo {
+  id: UUID!
+  name: String!
+  directoryUrl: String!
+  isStaging: Boolean!
+  isDefault: Boolean!
+  contactEmail: String!
+  accountUrl: String
+  termsOfServiceUrl: String
+  termsAcceptedAtUtc: DateTime!
+  version: UUID!
+}
+
+type AcmeDirectorySnapshot {
+  name: String!
+  directoryUrl: String!
+  isStaging: Boolean!
+  termsOfServiceUrl: String
+  accountId: UUID
+  registered: Boolean!
+}
+
+"A connection to a list of items."
+type ActivationConnectionConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [ActivationConnectionEdge!]
+  "A flattened list of the nodes."
+  nodes: [GatewayActivationEvent!]
+}
+
+"An edge in a connection."
+type ActivationConnectionEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: GatewayActivationEvent!
+}
+
+type ApiKeyInfo {
+  id: UUID!
+  name: String!
+  prefix: String!
+  expiresAtUtc: DateTime
+  revokedAtUtc: DateTime
+  lastUsedAtUtc: DateTime
+}
+
+"A connection to a list of items."
+type AuditConnectionConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [AuditConnectionEdge!]
+  "A flattened list of the nodes."
+  nodes: [AuditEvent!]
+}
+
+"An edge in a connection."
+type AuditConnectionEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: AuditEvent!
+}
+
+type AuditEvent {
+  id: Long!
+  environmentId: UUID
+  actorType: String!
+  actorId: String!
+  action: String!
+  targetType: String!
+  targetId: String!
+  detailsJson: String!
+  correlationId: String!
+  occurredAtUtc: DateTime!
+}
+
+type AuthorizationPolicy {
+  type: String!
+  requiredScopes: [String!]
+  authority: String
+  issuer: String
+  audiences: [String!]
+  requiredClaims: [KeyValuePairOfStringAndString!]
+  policies: [String!]
+  clockSkew: Duration
+}
+
+"A connection to a list of items."
+type ClustersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [ClustersEdge!]
+  "A flattened list of the nodes."
+  nodes: [GatewayCluster!]
+}
+
+"An edge in a connection."
+type ClustersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: GatewayCluster!
+}
+
+type ConfigRevision {
+  id: UUID!
+  environmentId: UUID!
+  number: Long!
+  state: RevisionState!
+  configJson: String!
+  contentHash: String!
+  concurrencyVersion: UUID!
+  comment: String
+  createdBy: String!
+  createdAtUtc: DateTime!
+  publishedBy: String
+  publishedAtUtc: DateTime
+  parentRevisionId: UUID
+  changeKind: String
+  changeSummary: String
+  changedResourceType: String
+  changedResourceId: String
+  revertsRevisionId: UUID
+}
+
+type ConfigurationChangeResult {
+  revision: ConfigRevision!
+  route: ManagedRoute
+}
+
+type CorsPolicy {
+  origins: [String!]!
+  methods: [String!]!
+  headers: [String!]!
+  exposedHeaders: [String!]
+  allowCredentials: Boolean!
+  preflightMaxAge: Duration
+}
+
+type DnsManagedZone {
+  name: String!
+  id: String!
+}
+
+type DnsProviderProfileInfo {
+  id: UUID!
+  name: String!
+  provider: DnsProviderKind!
+  managedZones: [String!]!
+  updatedAtUtc: DateTime!
+  version: UUID!
+}
+
+type EntraConnectionInfo {
+  enabled: Boolean!
+  configured: Boolean!
+  authority: String!
+  audience: String!
+  clientId: String!
+  scope: String!
+  version: UUID!
+}
+
+"A connection to a list of items."
+type EnvironmentConnectionConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [EnvironmentConnectionEdge!]
+  "A flattened list of the nodes."
+  nodes: [GatewayEnvironment!]
+}
+
+"An edge in a connection."
+type EnvironmentConnectionEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: GatewayEnvironment!
+}
+
+type GatewayActivationEvent {
+  id: Long!
+  environmentId: UUID!
+  instanceId: String!
+  desiredRevisionId: UUID
+  contentHash: String
+  outcome: ActivationOutcome!
+  errorCode: String
+  errorMessage: String
+  startedAtUtc: DateTime!
+  completedAtUtc: DateTime!
+}
+
+type GatewayCluster {
+  id: String!
+  loadBalancingPolicy: String!
+  destinations: [KeyValuePairOfStringAndGatewayDestination!]!
+  health: HealthPolicy!
+  sessionAffinity: SessionAffinityPolicy
+  resiliencePolicy: String
+  traffic: TrafficPolicy
+  tls: UpstreamTlsPolicy
+  httpClient: UpstreamHttpPolicy!
+  metadata: GatewayMetadata!
+}
+
+type GatewayDestination {
+  address: String!
+  healthAddress: String
+  pool: String!
+  metadata: [KeyValuePairOfStringAndString!]
+}
+
+type GatewayDiagnostics {
+  environmentId: UUID!
+  desiredRevisionId: UUID
+  instanceCount: Int!
+  healthyCount: Int!
+  staleCount: Int!
+  driftedCount: Int!
+  recentFailures: [GatewayActivationEvent!]!
+}
+
+type GatewayEnvironment {
+  id: UUID!
+  slug: String!
+  displayName: String!
+  description: String
+  activeRevisionId: UUID
+  pendingRevisionId: UUID
+  publishingMode: ConfigurationPublishingMode!
+  archivedAtUtc: DateTime
+  createdAtUtc: DateTime!
+  updatedAtUtc: DateTime!
+  concurrencyVersion: UUID!
+}
+
+type GatewayInstance {
+  id: UUID!
+  environmentId: UUID!
+  instanceId: String!
+  displayName: String!
+  advertisedAddress: String
+  startedAtUtc: DateTime!
+  lastHeartbeatAtUtc: DateTime!
+  activatedRevisionId: UUID
+  activatedContentHash: String
+  lastActivationStatus: String
+  lastActivationAtUtc: DateTime
+  lastActivationErrorCode: String
+  stoppedAtUtc: DateTime
+  runtimeVersion: String!
+  activeRouteRequestsJson: String!
+}
+
+type GatewayMetadata {
+  owner: String
+  tags: [String!]
+  description: String
+  criticality: String
+  sunsetAt: DateTime
+  deprecationMessage: String
+  displayName: String
+  managedByRouteId: String
+}
+
+type GatewayRoute {
+  id: String!
+  enabled: Boolean!
+  order: Int
+  match: RouteMatch!
+  clusterId: String!
+  transforms: [[KeyValuePairOfStringAndString!]!]!
+  authorizationPolicy: String
+  rateLimitPolicy: String
+  timeoutPolicy: String
+  corsPolicy: String
+  mirror: MirrorPolicy
+  access: RouteAccessPolicy
+  requestValidation: RequestValidationPolicy
+  responseCache: ResponseCachePolicy
+  disabledFeatures: [String!]!
+  operations: RouteOperationalPolicy!
+  inbound: InboundRoutePolicy!
+  metadata: GatewayMetadata!
+}
+
+type HealthPolicy {
+  activeEnabled: Boolean!
+  path: String!
+  interval: Duration
+  timeout: Duration
+  passiveEnabled: Boolean!
+  reactivationPeriod: Duration
+  activePolicy: String!
+  passivePolicy: String!
+  availableDestinationsPolicy: String!
+  query: String
+}
+
+type InboundCertificateInfo {
+  id: UUID!
+  name: String!
+  thumbprint: String!
+  subject: String!
+  dnsNames: [String!]!
+  notBeforeUtc: DateTime!
+  notAfterUtc: DateTime!
+  version: UUID!
+}
+
+type InboundRoutePolicy {
+  scheme: InboundScheme!
+  certificateId: UUID
+  webSocketsAllowed: Boolean!
+}
+
+type InboundSecuritySettingsInfo {
+  hstsEnabled: Boolean!
+  hstsHosts: [String!]!
+  hstsMaxAgeSeconds: Int!
+  hstsIncludeSubDomains: Boolean!
+  hstsPreload: Boolean!
+  version: UUID!
+}
+
+"A connection to a list of items."
+type InstanceConnectionConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [InstanceConnectionEdge!]
+  "A flattened list of the nodes."
+  nodes: [GatewayInstance!]
+}
+
+"An edge in a connection."
+type InstanceConnectionEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: GatewayInstance!
+}
+
+type InstanceDrift {
+  instanceRecordId: UUID!
+  instanceId: String!
+  activatedRevisionId: UUID
+  desiredRevisionId: UUID
+  state: String!
+}
+
+type KeyValuePairOfStringAndGatewayDestination {
+  key: String!
+  value: GatewayDestination!
+}
+
+type KeyValuePairOfStringAndInt32 {
+  key: String!
+  value: Int!
+}
+
+type KeyValuePairOfStringAndString {
+  key: String!
+  value: String!
+}
+
+type LocalUserInfo {
+  id: UUID!
+  username: String!
+  displayName: String
+  roles: [String!]!
+  enabled: Boolean!
+  mustChangePassword: Boolean!
+  createdAtUtc: DateTime!
+  lastLoginAtUtc: DateTime
+  version: UUID!
+}
+
+type LocalUserSecretPayload {
+  user: LocalUserInfo!
+  temporaryPassword: String!
+}
+
+type ManagedCertificateActivityInfo {
+  id: Long!
+  action: String!
+  detailsJson: String!
+  occurredAtUtc: DateTime!
+}
+
+type ManagedCertificateDnsChallengeInfo {
+  id: UUID!
+  recordName: String!
+  recordValue: String!
+  expiresAtUtc: DateTime!
+}
+
+type ManagedCertificateInfo {
+  id: UUID!
+  name: String!
+  dnsNames: [String!]!
+  acmeAccountId: UUID!
+  acmeAccountName: String!
+  isStaging: Boolean!
+  challengeKind: AcmeChallengeKind!
+  dnsProviderProfileId: UUID
+  dnsProviderProfileName: String
+  state: ManagedCertificateState!
+  failedAttemptCount: Int!
+  lastErrorCode: String
+  lastErrorMessage: String
+  lastAttemptAtUtc: DateTime
+  lastSuccessAtUtc: DateTime
+  nextAttemptAtUtc: DateTime!
+  certificate: InboundCertificateInfo
+  version: UUID!
+}
+
+type ManagedOpenApiPreview {
+  token: String!
+  routes: [ManagedOpenApiRoutePreview!]!
+  issues: [ValidationIssue!]!
+}
+
+type ManagedOpenApiRoutePreview {
+  id: String!
+  path: String!
+  methods: [String!]!
+  conflicts: Boolean!
+}
+
+type ManagedRoute {
+  id: String!
+  name: String!
+  version: String!
+  enabled: Boolean!
+  match: RouteMatch!
+  upstream: ManagedUpstream!
+  features: ManagedRouteFeatures!
+  operations: RouteOperationalPolicy!
+  order: Int
+  metadata: GatewayMetadata
+  inbound: InboundRoutePolicy
+}
+
+type ManagedRouteFeatures {
+  authorization: AuthorizationPolicy
+  rateLimit: RateLimitPolicy
+  timeout: TimeoutPolicy
+  resilience: ResiliencePolicy
+  cors: CorsPolicy
+  transforms: [[KeyValuePairOfStringAndString!]!]
+  mirror: MirrorPolicy
+  access: RouteAccessPolicy
+  requestValidation: RequestValidationPolicy
+  responseCache: ResponseCachePolicy
+  disabledFeatures: [String!]
+}
+
+type ManagedUpstream {
+  url: String!
+  destinations: [KeyValuePairOfStringAndGatewayDestination!]
+  loadBalancingPolicy: String!
+  health: HealthPolicy
+  sessionAffinity: SessionAffinityPolicy
+  traffic: TrafficPolicy
+  tls: UpstreamTlsPolicy
+  httpClient: UpstreamHttpPolicy
+  upstreamId: String
+  upstreamName: String
+}
+
+type ManagementIdentity {
+  id: String
+  name: String
+  authenticationType: String
+  roles: [String!]!
+  scopes: [String!]!
+}
+
+type MirrorPolicy {
+  clusterId: String!
+  percentage: Float!
+  allowedMethods: [String!]
+  maximumBufferedBodyBytes: Long!
+  timeout: Duration
+  removeHeaders: [String!]
+}
+
+type NamedUpstream {
+  id: String!
+  name: String!
+  version: String!
+  destinations: [KeyValuePairOfStringAndGatewayDestination!]!
+  loadBalancingPolicy: String!
+  health: HealthPolicy
+  sessionAffinity: SessionAffinityPolicy
+  traffic: TrafficPolicy
+  tls: UpstreamTlsPolicy
+  httpClient: UpstreamHttpPolicy
+}
+
+"Information about pagination in a connection."
+type PageInfo {
+  "Indicates whether more edges exist following the set defined by the clients arguments."
+  hasNextPage: Boolean!
+  "Indicates whether more edges exist prior the set defined by the clients arguments."
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+}
+
+type PendingConfigurationChange {
+  kind: String!
+  resourceId: String
+  summary: String!
+}
+
+type PendingConfigurationInfo {
+  revisionId: UUID!
+  version: UUID!
+  baseRevisionId: UUID
+  createdAtUtc: DateTime!
+  createdBy: String!
+  changes: [PendingConfigurationChange!]!
+  validation: ValidationReport!
+}
+
+type RateLimitPolicy {
+  type: String!
+  permitLimit: Int!
+  window: Duration
+  queueLimit: Int!
+  partitionBy: String!
+  partitionName: String
+  segmentsPerWindow: Int!
+  tokensPerPeriod: Int
+  queueOrder: String!
+}
+
+type RequestValidationPolicy {
+  jsonSchema: String!
+  maximumBodyBytes: Long!
+}
+
+type ResiliencePolicy {
+  retryCount: Int!
+  attemptTimeout: Duration
+  statusCodes: [Int!]
+  allowedMethods: [String!]
+  maximumBufferedRequestBytes: Long!
+  failureRatio: Float
+  samplingDuration: Duration
+  minimumThroughput: Int
+  breakDuration: Duration
+  retryTransportFailures: Boolean!
+  backoff: Duration
+  jitter: Boolean!
+}
+
+type ResponseCachePolicy {
+  timeToLive: Duration!
+  maximumBodyBytes: Long!
+  varyByHeaders: [String!]
+}
+
+type RetentionResult {
+  leaseAcquired: Boolean!
+  activationEventsDeleted: Int!
+  auditEventsDeleted: Int!
+}
+
+type RevisionChange {
+  path: String!
+  beforeJson: String
+  afterJson: String
+}
+
+"A connection to a list of items."
+type RevisionConnectionConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [RevisionConnectionEdge!]
+  "A flattened list of the nodes."
+  nodes: [ConfigRevision!]
+}
+
+"An edge in a connection."
+type RevisionConnectionEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: ConfigRevision!
+}
+
+type RevisionDiff {
+  fromRevisionId: UUID!
+  toRevisionId: UUID!
+  changedPaths: [String!]!
+  changes: [RevisionChange!]!
+}
+
+"A connection to a list of items."
+type RevisionRoutesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [RevisionRoutesEdge!]
+  "A flattened list of the nodes."
+  nodes: [GatewayRoute!]
+}
+
+"An edge in a connection."
+type RevisionRoutesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: GatewayRoute!
+}
+
+type RouteAccessPolicy {
+  allowedCidrs: [String!]
+  deniedCidrs: [String!]
+  maximumRequestBodyBytes: Long
+}
+
+type RouteFeatureDescriptor {
+  id: String!
+  category: String!
+  displayName: String!
+  description: String!
+}
+
+type RouteMatch {
+  path: String!
+  hosts: [String!]!
+  methods: [String!]!
+  headers: [RouteValueMatch!]!
+  queryParameters: [RouteValueMatch!]!
+}
+
+type RouteOperationalDefaults {
+  for(state: RouteOperationalState!): String
+  drainingProfileId: String
+  maintenanceProfileId: String
+  offlineProfileId: String
+}
+
+type RouteOperationalPolicy {
+  state: RouteOperationalState!
+  response: RouteUnavailableResponse
+  responseProfileId: String
+}
+
+type RouteRuntimeStatus {
+  routeId: String!
+  activeRequests: Long!
+  reportingInstances: Int!
+}
+
+type RouteUnavailableResponse {
+  statusCode: Int!
+  title: String
+  message: String
+  retryAfter: Duration
+  upstreamUrl: String
+}
+
+type RouteUnavailableResponseProfile {
+  id: String!
+  name: String!
+  response: RouteUnavailableResponse!
+}
+
+type RouteValueMatch {
+  name: String!
+  pattern: String!
+  mode: String!
+  isCaseSensitive: Boolean!
+}
+
+type SecretPayload {
+  id: UUID!
+  prefix: String!
+  secret: String!
+}
+
+type SessionAffinityPolicy {
+  enabled: Boolean!
+  policy: String!
+  failurePolicy: String!
+  cookieName: String!
+  path: String
+  domain: String
+  securePolicy: String!
+  sameSite: String!
+  expiration: Duration
+}
+
+type SystemStatus {
+  version: String!
+  checkedAtUtc: DateTime!
+}
+
+type TimeoutPolicy {
+  total: Duration!
+}
+
+type TrafficPolicy {
+  allocations: [KeyValuePairOfStringAndInt32!]!
+  mode: String!
+  key: String
+  fallbackToHealthyPool: Boolean!
+  keySource: String
+}
+
+type UpstreamHttpPolicy {
+  version: String!
+  versionPolicy: String!
+  automaticDecompression: Boolean!
+  allowAutoRedirect: Boolean!
+  pooledConnectionLifetime: Duration
+  maxConnectionsPerServer: Int
+  enableMultipleHttp2Connections: Boolean!
+}
+
+type UpstreamTlsPolicy {
+  clientCertificateRef: String
+  trustBundleRef: String
+}
+
+type ValidationIssue {
+  severity: ValidationSeverity!
+  code: String!
+  jsonPath: String!
+  message: String!
+  routeId: String
+  clusterId: String
+}
+
+type ValidationReport {
+  issues: [ValidationIssue!]!
+  isValid: Boolean!
+}
+
+input AuthorizationPolicyInput {
+  type: String!
+  requiredScopes: [String!]
+  authority: String
+  issuer: String
+  audiences: [String!]
+  requiredClaims: [KeyValuePairOfStringAndStringInput!]
+  policies: [String!]
+  clockSkew: Duration
+}
+
+input CorsPolicyInput {
+  origins: [String!]!
+  methods: [String!]!
+  headers: [String!]!
+  exposedHeaders: [String!]
+  allowCredentials: Boolean! = false
+  preflightMaxAge: Duration
+}
+
+input CreateManagedRouteInput {
+  name: String!
+  path: String!
+  upstreamUrl: String
+  upstreamId: String
+}
+
+input DnsProviderCredentialsInput {
+  apiToken: String
+  accessKeyId: String
+  secretAccessKey: String
+  sessionToken: String
+  tenantId: String
+  clientId: String
+  clientSecret: String
+  subscriptionId: String
+  resourceGroup: String
+  projectId: String
+  serviceAccountJson: String
+  username: String
+  password: String
+  customerNumber: String
+}
+
+input GatewayDestinationInput {
+  address: String!
+  healthAddress: String
+  pool: String! = "default"
+  metadata: [KeyValuePairOfStringAndStringInput!]
+}
+
+input GatewayMetadataInput {
+  owner: String
+  tags: [String!]
+  description: String
+  criticality: String
+  sunsetAt: DateTime
+  deprecationMessage: String
+  displayName: String
+  managedByRouteId: String
+}
+
+input HealthPolicyInput {
+  activeEnabled: Boolean! = false
+  path: String! = "/healthz"
+  interval: Duration
+  timeout: Duration
+  passiveEnabled: Boolean! = false
+  reactivationPeriod: Duration
+  activePolicy: String! = "ConsecutiveFailures"
+  passivePolicy: String! = "TransportFailureRate"
+  availableDestinationsPolicy: String! = "HealthyOrPanic"
+  query: String
+}
+
+input InboundRoutePolicyInput {
+  scheme: InboundScheme! = ANY
+  certificateId: UUID
+  webSocketsAllowed: Boolean! = true
+}
+
+input KeyValuePairOfStringAndGatewayDestinationInput {
+  key: String!
+  value: GatewayDestinationInput!
+}
+
+input KeyValuePairOfStringAndInt32Input {
+  key: String!
+  value: Int!
+}
+
+input KeyValuePairOfStringAndStringInput {
+  key: String!
+  value: String!
+}
+
+input ManagedRouteFeaturesInput {
+  authorization: AuthorizationPolicyInput
+  rateLimit: RateLimitPolicyInput
+  timeout: TimeoutPolicyInput
+  resilience: ResiliencePolicyInput
+  cors: CorsPolicyInput
+  transforms: [[KeyValuePairOfStringAndStringInput!]!]
+  mirror: MirrorPolicyInput
+  access: RouteAccessPolicyInput
+  requestValidation: RequestValidationPolicyInput
+  responseCache: ResponseCachePolicyInput
+  disabledFeatures: [String!]
+}
+
+input ManagedUpstreamInput {
+  url: String!
+  destinations: [KeyValuePairOfStringAndGatewayDestinationInput!]
+  loadBalancingPolicy: String! = "PowerOfTwoChoices"
+  health: HealthPolicyInput
+  sessionAffinity: SessionAffinityPolicyInput
+  traffic: TrafficPolicyInput
+  tls: UpstreamTlsPolicyInput
+  httpClient: UpstreamHttpPolicyInput
+  upstreamId: String
+  upstreamName: String
+}
+
+input MirrorPolicyInput {
+  clusterId: String!
+  percentage: Float! = 100
+  allowedMethods: [String!]
+  maximumBufferedBodyBytes: Long! = 0
+  timeout: Duration
+  removeHeaders: [String!]
+}
+
+input RateLimitPolicyInput {
+  type: String!
+  permitLimit: Int!
+  window: Duration
+  queueLimit: Int! = 0
+  partitionBy: String! = "global"
+  partitionName: String
+  segmentsPerWindow: Int! = 4
+  tokensPerPeriod: Int
+  queueOrder: String! = "oldestFirst"
+}
+
+input RequestValidationPolicyInput {
+  jsonSchema: String!
+  maximumBodyBytes: Long! = 1048576
+}
+
+input ResiliencePolicyInput {
+  retryCount: Int! = 0
+  attemptTimeout: Duration
+  statusCodes: [Int!]
+  allowedMethods: [String!]
+  maximumBufferedRequestBytes: Long! = 0
+  failureRatio: Float
+  samplingDuration: Duration
+  minimumThroughput: Int
+  breakDuration: Duration
+  retryTransportFailures: Boolean! = true
+  backoff: Duration
+  jitter: Boolean! = true
+}
+
+input ResponseCachePolicyInput {
+  timeToLive: Duration!
+  maximumBodyBytes: Long! = 1048576
+  varyByHeaders: [String!]
+}
+
+input RouteAccessPolicyInput {
+  allowedCidrs: [String!]
+  deniedCidrs: [String!]
+  maximumRequestBodyBytes: Long
+}
+
+input RouteMatchInput {
+  path: String!
+  hosts: [String!]!
+  methods: [String!]!
+  headers: [RouteValueMatchInput!]!
+  queryParameters: [RouteValueMatchInput!]!
+}
+
+input RouteOperationalPolicyInput {
+  state: RouteOperationalState! = ONLINE
+  response: RouteUnavailableResponseInput
+  responseProfileId: String
+}
+
+input RouteUnavailableResponseInput {
+  statusCode: Int! = 503
+  title: String
+  message: String
+  retryAfter: Duration
+  upstreamUrl: String
+}
+
+input RouteValueMatchInput {
+  name: String!
+  pattern: String!
+  mode: String! = "Exact"
+  isCaseSensitive: Boolean! = false
+}
+
+input SaveNamedUpstreamInput {
+  name: String!
+  destinations: [KeyValuePairOfStringAndGatewayDestinationInput!]!
+  loadBalancingPolicy: String! = "PowerOfTwoChoices"
+  health: HealthPolicyInput
+  sessionAffinity: SessionAffinityPolicyInput
+  traffic: TrafficPolicyInput
+  tls: UpstreamTlsPolicyInput
+  httpClient: UpstreamHttpPolicyInput
+}
+
+input SaveRouteUnavailableResponseProfileInput {
+  id: String
+  name: String!
+  statusCode: Int! = 503
+  title: String
+  message: String
+  retryAfter: Duration
+  upstreamUrl: String
+}
+
+input SessionAffinityPolicyInput {
+  enabled: Boolean! = true
+  policy: String! = "Cookie"
+  failurePolicy: String! = "Redistribute"
+  cookieName: String! = "ApiGateway.Affinity"
+  path: String
+  domain: String
+  securePolicy: String! = "SameAsRequest"
+  sameSite: String! = "Lax"
+  expiration: Duration
+}
+
+input TimeoutPolicyInput {
+  total: Duration!
+}
+
+input TrafficPolicyInput {
+  allocations: [KeyValuePairOfStringAndInt32Input!]!
+  mode: String! = "random"
+  key: String
+  fallbackToHealthyPool: Boolean! = false
+  keySource: String
+}
+
+input UpdateManagedRouteBasicsInput {
+  name: String!
+  path: String!
+  upstreamUrl: String
+  enabled: Boolean! = true
+  methods: [String!]
+  hosts: [String!]
+  headers: [RouteValueMatchInput!]
+  queryParameters: [RouteValueMatchInput!]
+  order: Int
+  destinations: [KeyValuePairOfStringAndGatewayDestinationInput!]
+  loadBalancingPolicy: String
+  pathHandling: UpstreamPathHandling
+  pathPrefixToRemove: String
+  inbound: InboundRoutePolicyInput
+  httpClient: UpstreamHttpPolicyInput
+  preserveOriginalHost: Boolean
+  upstreamId: String
+}
+
+input UpdateManagedRouteInput {
+  name: String!
+  enabled: Boolean!
+  match: RouteMatchInput!
+  upstream: ManagedUpstreamInput!
+  features: ManagedRouteFeaturesInput!
+  order: Int
+  operations: RouteOperationalPolicyInput
+  metadata: GatewayMetadataInput
+  inbound: InboundRoutePolicyInput
+}
+
+input UpdateRouteOperationalDefaultsInput {
+  drainingProfileId: String
+  maintenanceProfileId: String
+  offlineProfileId: String
+}
+
+input UpdateRouteOperationalStateInput {
+  state: RouteOperationalState!
+  responseProfileId: String
+  useEnvironmentDefault: Boolean! = true
+  statusCode: Int! = 503
+  title: String
+  message: String
+  retryAfter: Duration
+  upstreamUrl: String
+}
+
+input UpstreamHttpPolicyInput {
+  version: String! = "2.0"
+  versionPolicy: String! = "RequestVersionOrLower"
+  automaticDecompression: Boolean! = false
+  allowAutoRedirect: Boolean! = false
+  pooledConnectionLifetime: Duration
+  maxConnectionsPerServer: Int
+  enableMultipleHttp2Connections: Boolean! = false
+}
+
+input UpstreamTlsPolicyInput {
+  clientCertificateRef: String
+  trustBundleRef: String
+}
+
+enum AcmeChallengeKind {
+  HTTP01
+  DNS01
+  MANUAL_DNS01
+}
+
+enum ActivationOutcome {
+  SUCCEEDED
+  FAILED
+}
+
+"Defines when a policy shall be executed."
+enum ApplyPolicy {
+  "Before the resolver was executed."
+  BEFORE_RESOLVER
+  "After the resolver was executed."
+  AFTER_RESOLVER
+  "The policy is applied in the validation step before the execution."
+  VALIDATION
+}
+
+enum ConfigurationPublishingMode {
+  IMMEDIATE
+  STAGED
+}
+
+enum DnsProviderKind {
+  CLOUDFLARE
+  ROUTE53
+  AZURE_DNS
+  GOOGLE_CLOUD_DNS
+  DIGITAL_OCEAN
+  LOOPIA
+  SIMPLY
+}
+
+enum InboundScheme {
+  ANY
+  HTTP_ONLY
+  HTTPS_REDIRECT
+}
+
+enum ManagedCertificateState {
+  PENDING
+  ISSUING
+  ACTIVE
+  RENEWING
+  FAILED
+}
+
+enum RevisionState {
+  DRAFT
+  PUBLISHED
+  ABANDONED
+}
+
+enum RouteOperationalState {
+  ONLINE
+  DRAINING
+  MAINTENANCE
+  OFFLINE
+}
+
+enum UpstreamPathHandling {
+  PRESERVE
+  STRIP_PREFIX
+}
+
+enum ValidationSeverity {
+  WARNING
+  ERROR
+}
+
+"The `DateTime` scalar type represents a date and time with time zone offset information."
+scalar DateTime
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/date-time.html")
+
+"The `Duration` scalar type represents a duration of time."
+scalar Duration
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/duration.html")
+
+"The `Long` scalar type represents a signed 64-bit integer."
+scalar Long
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/long.html")
+
+"The `UUID` scalar type represents a Universally Unique Identifier (UUID) as defined by RFC 9562."
+scalar UUID
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/uuid.html")
+
+"The authorize directive."
+directive @authorize(
+  "The name of the authorization policy that determines access to the annotated resource."
+  policy: String
+  "Roles that are allowed to access the annotated resource."
+  roles: [String!]
+  "Defines when the authorize directive shall be applied. By default the authorize directive is applied before the resolver is executed."
+  apply: ApplyPolicy! = BEFORE_RESOLVER
+) repeatable on OBJECT | FIELD_DEFINITION
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost(
+  "The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc."
+  weight: String!
+) on
+  | SCALAR
+  | OBJECT
+  | FIELD_DEFINITION
+  | ARGUMENT_DEFINITION
+  | ENUM
+  | INPUT_FIELD_DEFINITION
+
+"The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information."
+directive @listSize(
+  "The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field."
+  assumedSize: Int
+  "The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments."
+  slicingArguments: [String!]
+  "The `slicingArgumentDefaultValue` argument can be used to define a default value for a slicing argument, which is used if the argument is not present in a query."
+  slicingArgumentDefaultValue: Int
+  "The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields."
+  sizedFields: [String!]
+  "The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error."
+  requireOneSlicingArgument: Boolean = true
+) on FIELD_DEFINITION

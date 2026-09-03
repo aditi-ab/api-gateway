@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aditi.se/schemas/api-gateway/gateway-config.v3.schema.json",
+  "title": "API Gateway configuration v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "routes", "clusters", "policies"],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "routes": { "type": "array", "items": { "$ref": "#/$defs/route" } },
+    "clusters": { "type": "array", "items": { "$ref": "#/$defs/cluster" } },
+    "policies": { "type": "object" },
+    "unavailableResponseProfiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "name", "response"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "response": { "$ref": "#/$defs/unavailableResponse" }
+        }
+      }
+    },
+    "operationalDefaults": {
+      "type": "object",
+      "properties": {
+        "drainingProfileId": { "type": ["string", "null"] },
+        "maintenanceProfileId": { "type": ["string", "null"] },
+        "offlineProfileId": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "owner": { "type": ["string", "null"] },
+        "tags": { "type": ["array", "null"], "items": { "type": "string" } },
+        "description": { "type": ["string", "null"] },
+        "criticality": { "type": ["string", "null"] },
+        "sunsetAt": { "type": ["string", "null"], "format": "date-time" },
+        "deprecationMessage": { "type": ["string", "null"] },
+        "displayName": { "type": ["string", "null"] },
+        "managedByRouteId": { "type": ["string", "null"] }
+      }
+    },
+    "unavailableResponse": {
+      "type": "object",
+      "properties": {
+        "statusCode": { "type": "integer", "minimum": 400, "maximum": 599 },
+        "title": { "type": ["string", "null"] },
+        "message": { "type": ["string", "null"] },
+        "retryAfter": { "type": ["string", "null"] },
+        "upstreamUrl": { "type": ["string", "null"], "format": "uri" }
+      }
+    },
+    "inbound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "webSocketsAllowed"],
+      "properties": {
+        "scheme": { "enum": ["any", "httpOnly", "httpsRedirect"] },
+        "certificateId": { "type": ["string", "null"], "format": "uuid" },
+        "webSocketsAllowed": { "type": "boolean", "default": true }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "scheme": { "const": "httpsRedirect" } }, "required": ["scheme"] },
+          "then": { "required": ["certificateId"], "properties": { "certificateId": { "type": "string", "format": "uuid" } } }
+        },
+        {
+          "if": { "properties": { "scheme": { "const": "httpOnly" } }, "required": ["scheme"] },
+          "then": { "properties": { "certificateId": { "type": "null" } } }
+        }
+      ]
+    },
+    "route": {
+      "type": "object",
+      "required": ["id", "enabled", "match", "clusterId", "transforms", "metadata"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "enabled": { "type": "boolean" },
+        "order": { "type": ["integer", "null"] },
+        "match": { "type": "object" },
+        "clusterId": { "type": "string" },
+        "transforms": { "type": "array" },
+        "authorizationPolicy": { "type": ["string", "null"] },
+        "rateLimitPolicy": { "type": ["string", "null"] },
+        "timeoutPolicy": { "type": ["string", "null"] },
+        "corsPolicy": { "type": ["string", "null"] },
+        "mirror": { "type": ["object", "null"] },
+        "access": { "type": ["object", "null"] },
+        "requestValidation": { "type": ["object", "null"] },
+        "responseCache": { "type": ["object", "null"] },
+        "disabledFeatures": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["authorization", "ip-restrictions", "rate-limit", "request-size", "headers", "transforms", "timeout", "resilience", "cors", "mirror", "request-validation", "response-cache"]
+          }
+        },
+        "inbound": { "$ref": "#/$defs/inbound" },
+        "operations": {
+          "type": "object",
+          "properties": {
+            "state": { "enum": ["online", "draining", "maintenance", "offline"] },
+            "responseProfileId": { "type": ["string", "null"] },
+            "response": { "type": ["object", "null"] }
+          }
+        },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      }
+    },
+    "cluster": {
+      "type": "object",
+      "required": ["id", "destinations"],
+      "properties": {
+        "id": { "type": "string" },
+        "destinations": { "type": "object", "minProperties": 1 },
+        "metadata": { "$ref": "#/$defs/metadata" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

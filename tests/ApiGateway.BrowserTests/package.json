@@ -1,0 +1,1 @@
+{"name":"api-gateway-browser-tests","version":"1.0.0","private":true,"scripts":{"test":"playwright test"},"devDependencies":{"@axe-core/playwright":"4.13.0","@playwright/test":"1.62.1"}}

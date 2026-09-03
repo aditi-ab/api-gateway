@@ -1,0 +1,1 @@
+{ "extends": "@vue/tsconfig/tsconfig.dom.json", "compilerOptions": { "composite": true, "target": "ES2023", "baseUrl": ".", "paths": { "@/*": ["src/*"] }, "types": ["vitest/globals"], "noUncheckedIndexedAccess": true, "skipLibCheck": true }, "include": ["env.d.ts", "src/**/*.ts", "src/**/*.vue"] }

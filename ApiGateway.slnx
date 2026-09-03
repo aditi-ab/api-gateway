@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ApiGateway.Domain/ApiGateway.Domain.csproj" />
+    <Project Path="src/ApiGateway.Application/ApiGateway.Application.csproj" />
+    <Project Path="src/ApiGateway.Persistence/ApiGateway.Persistence.csproj" />
+    <Project Path="src/ApiGateway.Persistence.Sqlite/ApiGateway.Persistence.Sqlite.csproj" />
+    <Project Path="src/ApiGateway.Persistence.SqlServer/ApiGateway.Persistence.SqlServer.csproj" />
+    <Project Path="src/ApiGateway/ApiGateway.csproj" />
+    <Project Path="src/ApiGateway.Management/ApiGateway.Management.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ApiGateway.UnitTests/ApiGateway.UnitTests.csproj" />
+    <Project Path="tests/ApiGateway.IntegrationTests/ApiGateway.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

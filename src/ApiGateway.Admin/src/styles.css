@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import '@aditify/ui/styles.css';
+
+@source './**/*.{vue,ts}';
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  overflow-y: auto;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+.content-shell,
+.page,
+.page-container {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.content-shell {
+  padding-inline: clamp(18px, 4vw, 72px);
+}
+
+.page,
+.page-container {
+  padding: 24px clamp(18px, 4vw, 72px) 56px;
+}
+
+h1,
+.page-title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.page-lead {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+}
+
+.eyebrow {
+  color: var(--primary);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.app-header {
+  z-index: 20;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.app-product-icon {
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.global-nav {
+  min-height: 46px;
+  overflow: visible;
+  border-top: 1px solid var(--border);
+}
+
+.global-navigation-menu {
+  flex: 0 0 auto;
+}
+
+.global-navigation-menu [data-slot='navigation-menu-trigger'],
+.global-navigation-menu [data-slot='navigation-menu-link'] {
+  min-width: max-content;
+}
+
+.app-shell:has(.pending-drawer) main {
+  padding-bottom: 5.5rem;
+}
+
+.environment-select {
+  flex: 0 0 240px;
+  width: 240px;
+  max-width: 280px;
+  min-width: 200px;
+}
+
+.data-panel {
+  overflow: hidden;
+}
+
+.click-row {
+  cursor: pointer;
+}
+
+.click-row:hover,
+.click-row:focus-visible {
+  background: var(--muted);
+}
+
+.product-mark-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.language-button {
+  min-width: 76px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-footer {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding-block: 8px;
+  color: var(--muted-foreground);
+  background: var(--card);
+  font-size: 0.8rem;
+}
+
+code {
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.3rem;
+  color: var(--primary);
+  background: var(--muted);
+}
+
+@media (max-width: 800px) {
+  .page,
+  .page-container,
+  .content-shell {
+    padding-inline: 16px;
+  }
+}
